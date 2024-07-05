@@ -9,6 +9,8 @@ import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 contract UpgradeScript is Script {
     function setUp() public {}
 
+    function test() public {}
+
     function run() public {
         Options memory opts;
         opts.referenceContract = "AmIBased1tx.sol";

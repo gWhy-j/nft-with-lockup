@@ -6,17 +6,9 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URISto
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/interfaces/IERC721Enumerable.sol";
-import "@openzeppelin/contracts/interfaces/IERC721Meta.sol";
-import "../interfaces/IAmIBased1tx.sol";
 import "./extensions/NFTUtils.sol";
 
-contract AmIBased1tx is
-    ERC721URIStorageUpgradeable,
-    ERC721EnumerableUpgradeable,
-    OwnableUpgradeable,
-    NFTUtils,
-    IAmIBased1tx
-{
+contract AmIBased1tx is ERC721URIStorageUpgradeable, ERC721EnumerableUpgradeable, OwnableUpgradeable, NFTUtils {
     function initialize(address initialOwner, uint256 fee) public initializer {
         __ERC721_init("TestToken", "TT");
         __Ownable_init(initialOwner);
@@ -30,7 +22,8 @@ contract AmIBased1tx is
         returns (bool)
     {
         // Call parent contracts' supportsInterface methods
-        return super.supportsInterface(interfaceId);
+        return ERC721URIStorageUpgradeable.supportsInterface(interfaceId)
+            || ERC721EnumerableUpgradeable.supportsInterface(interfaceId);
     }
 
     function _increaseBalance(address account, uint128 amount)
@@ -54,19 +47,21 @@ contract AmIBased1tx is
         return previousOwner;
     }
 
-    function amIBased(uint256 newScore, string memory newTokenURI, bytes memory sig, address referrer)
+    function amIBased(uint256 newScore, string memory newTokenURI, uint256 deadline, bytes memory sig, address referrer)
         public
         payable
         returns (uint256)
     {
         require(!isMinted(msg.sender), "NFT already minted!");
+        uint256 feeAmount = getFee();
+        require(msg.value >= feeAmount, "Insufficient balance");
+
         uint256 newTokenId = totalSupply() + 1;
         _safeMint(msg.sender, newTokenId);
         _mintLogging(msg.sender, referrer, newTokenId);
-        updateTokenInfo(newTokenId, newScore, newTokenURI, sig);
+        initialTokenInfo(newTokenId, newScore, newTokenURI, deadline, sig);
 
         // Send fee amount to the owner() address
-        uint256 feeAmount = getFee();
         (bool sent,) = owner().call{value: feeAmount}("");
         require(sent, "Failed to send Ether");
 
@@ -100,9 +95,36 @@ contract AmIBased1tx is
         }
     }
 
-    function updateTokenInfo(uint256 tokenId, uint256 newScore, string memory newTokenURI, bytes memory sig) public {
-        require(dataValidCheck(address(owner()), newScore, newTokenURI, sig), "Invalid Signature");
-        require(msg.sender == _requireOwned(tokenId), "Update available for only owner");
+    function setFee(uint256 fee) public onlyOwner {
+        _setFee(fee);
+    }
+
+    function initialTokenInfo(
+        uint256 tokenId,
+        uint256 newScore,
+        string memory newTokenURI,
+        uint256 deadline,
+        bytes memory sig
+    ) internal {
+        require(msg.sender == _requireOwned(tokenId), "Update available for token owner");
+        require(
+            dataValidCheck(address(owner()), msg.sender, 0, newScore, newTokenURI, deadline, sig), "Invalid Signature"
+        );
+        _updateTokenInfo(tokenId, newScore, newTokenURI);
+    }
+
+    function updateTokenInfo(
+        uint256 tokenId,
+        uint256 newScore,
+        string memory newTokenURI,
+        uint256 deadline,
+        bytes memory sig
+    ) public {
+        require(msg.sender == _requireOwned(tokenId), "Update available for token owner");
+        require(
+            dataValidCheck(address(owner()), msg.sender, tokenId, newScore, newTokenURI, deadline, sig),
+            "Invalid Signature"
+        );
         _updateTokenInfo(tokenId, newScore, newTokenURI);
     }
 

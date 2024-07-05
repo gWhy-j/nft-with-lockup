@@ -53,13 +53,22 @@ contract NFTUtils is Initializable {
         return $._minted[user];
     }
 
-    function dataValidCheck(address signer, uint256 newScore, string memory newTokenURI, bytes memory sig)
-        public
-        view
-        returns (bool)
-    {
+    function dataValidCheck(
+        address signer,
+        address tokenOwner,
+        uint256 tokenId,
+        uint256 newScore,
+        string memory newTokenURI,
+        uint256 deadline,
+        bytes memory sig
+    ) public view returns (bool) {
+        require(block.timestamp <= deadline, "Expired");
+
         bytes32 messageHash = keccak256(
-            abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(newScore, newTokenURI)))
+            abi.encodePacked(
+                "\x19Ethereum Signed Message:\n32",
+                keccak256(abi.encodePacked(tokenOwner, tokenId, newScore, newTokenURI, deadline))
+            )
         );
         return SignatureChecker.isValidSignatureNow(signer, messageHash, sig);
     }

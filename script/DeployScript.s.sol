@@ -13,6 +13,8 @@ contract DeployScript is Script {
 
     function setUp() public {}
 
+    function test() public {}
+
     function run() public {
         // uint256 deployerPrivateKey = vm.envUint("DEPLOYER");
         // vm.startBroadcast(deployerPrivateKey);
