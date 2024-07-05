@@ -33,7 +33,7 @@ contract DeployScript is Script {
         opts.defender.useDefenderDeploy = true;
 
         address proxy = Upgrades.deployTransparentProxy(
-            "AmIBased1tx.sol", admin, abi.encodeCall(AmIBased1tx.initialize, (owner)), opts
+            "AmIBased1tx.sol", admin, abi.encodeCall(AmIBased1tx.initialize, (owner, 200000000000000)), opts
         );
 
         console.log("Proxy address: %s", proxy);

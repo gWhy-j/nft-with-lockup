@@ -3,8 +3,9 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract NFTUtils {
+contract NFTUtils is Initializable {
     event Minted(address indexed minter, address indexed referrer, uint256 indexed tokenId);
     event Locked(uint256 tokenId);
     event Unlocked(uint256 tokenId);
@@ -12,7 +13,8 @@ contract NFTUtils {
     struct NFTUtilStorage {
         mapping(address minter => bool) _minted;
         mapping(uint256 tokenId => uint256) _score;
-        bool _isLocked;
+        bool _lockStatus;
+        uint256 _fee;
     }
 
     // keccak256(abi.encode(uint256(keccak256("1tx.storage.MintUtils")) - 1)) & ~bytes32(uint256(0xff))
@@ -24,11 +26,24 @@ contract NFTUtils {
         }
     }
 
+    /**
+     * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
+     */
+    function __NFTUtils_init(uint256 fee) internal onlyInitializing {
+        __NFTUtils_init_unchained(fee);
+    }
+
+    function __NFTUtils_init_unchained(uint256 fee) internal onlyInitializing {
+        NFTUtilStorage storage $ = _getNFTUtilStorage();
+        $._fee = fee;
+        $._lockStatus = true;
+    }
+
     function _mintLogging(address minter, address referrer, uint256 tokenId) internal {
         NFTUtilStorage storage $ = _getNFTUtilStorage();
         $._minted[minter] = true;
         emit Minted(minter, referrer, tokenId);
-        if ($._isLocked) {
+        if ($._lockStatus) {
             emit Locked(tokenId);
         }
     }
@@ -43,8 +58,15 @@ contract NFTUtils {
         view
         returns (bool)
     {
-        bytes32 messageHash = keccak256(abi.encodePacked(newScore, newTokenURI));
+        bytes32 messageHash = keccak256(
+            abi.encodePacked("\x19Ethereum Signed Message:\n32", keccak256(abi.encodePacked(newScore, newTokenURI)))
+        );
         return SignatureChecker.isValidSignatureNow(signer, messageHash, sig);
+    }
+
+    function getScore(uint256 tokenId) public view returns (uint256) {
+        NFTUtilStorage storage $ = _getNFTUtilStorage();
+        return $._score[tokenId];
     }
 
     function _setScore(uint256 tokenId, uint256 score) internal {
@@ -52,18 +74,28 @@ contract NFTUtils {
         $._score[tokenId] = score;
     }
 
-    function isLocked() public view returns (bool) {
+    function getLockStatus() public view returns (bool) {
         NFTUtilStorage storage $ = _getNFTUtilStorage();
-        return $._isLocked;
+        return $._lockStatus;
     }
 
     function _lock() internal {
         NFTUtilStorage storage $ = _getNFTUtilStorage();
-        $._isLocked = true;
+        $._lockStatus = true;
     }
 
     function _unLock() internal {
         NFTUtilStorage storage $ = _getNFTUtilStorage();
-        $._isLocked = false;
+        $._lockStatus = false;
+    }
+
+    function _setFee(uint256 newFee) internal {
+        NFTUtilStorage storage $ = _getNFTUtilStorage();
+        $._fee = newFee;
+    }
+
+    function getFee() public view returns (uint256) {
+        NFTUtilStorage storage $ = _getNFTUtilStorage();
+        return $._fee;
     }
 }
