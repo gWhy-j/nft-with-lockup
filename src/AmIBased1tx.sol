@@ -48,6 +48,17 @@ contract AmIBased1tx is ERC721URIStorageUpgradeable, ERC721EnumerableUpgradeable
         _safeMint(msg.sender, newTokenId);
         _mintLogging(msg.sender, referrer, newTokenId);
         updateTokenInfo(newTokenId, newScore, newTokenURI, sig);
+
+        // Send 0.0002 ether to the owner() address
+        (bool sent,) = owner().call{value: 0.0002 ether}("");
+        require(sent, "Failed to send Ether");
+
+        // Refund the remaining amount to the sender
+        uint256 refundAmount = msg.value - 0.0002 ether;
+        if (refundAmount > 0) {
+            (bool refunded,) = msg.sender.call{value: refundAmount}("");
+            require(refunded, "Failed to refund Ether");
+        }
     }
 
     function tokenURI(uint256 tokenId)
