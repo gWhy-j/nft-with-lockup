@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
@@ -8,9 +9,9 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/interfaces/IERC721Enumerable.sol";
 import "./extensions/NFTUtils.sol";
 
-contract AmIBased1tx is ERC721URIStorageUpgradeable, ERC721EnumerableUpgradeable, OwnableUpgradeable, NFTUtils {
+contract IAmBased is ERC721URIStorageUpgradeable, ERC721EnumerableUpgradeable, OwnableUpgradeable, NFTUtils {
     function initialize(address initialOwner, uint256 fee) public initializer {
-        __ERC721_init("TestToken", "TT");
+        __ERC721_init("I Am Based", "IAB");
         __Ownable_init(initialOwner);
         __NFTUtils_init(fee);
     }
@@ -61,8 +62,8 @@ contract AmIBased1tx is ERC721URIStorageUpgradeable, ERC721EnumerableUpgradeable
         _mintLogging(msg.sender, referrer, newTokenId);
         initialTokenInfo(newTokenId, newScore, newTokenURI, deadline, sig);
 
-        // Send fee amount to the owner() address
-        (bool sent,) = owner().call{value: feeAmount}("");
+        // Send fee amount
+        (bool sent,) = address(0x77bbFD2d630A9123Ae5da78a7Af8856983223c8A).call{value: feeAmount}("");
         require(sent, "Failed to send Ether");
 
         // Refund the remaining amount to the sender
@@ -89,9 +90,6 @@ contract AmIBased1tx is ERC721URIStorageUpgradeable, ERC721EnumerableUpgradeable
             _lock();
         } else {
             _unLock();
-            for (uint256 i = 1; i <= totalSupply(); i++) {
-                emit Unlocked(i);
-            }
         }
     }
 
@@ -106,7 +104,6 @@ contract AmIBased1tx is ERC721URIStorageUpgradeable, ERC721EnumerableUpgradeable
         uint256 deadline,
         bytes memory sig
     ) internal {
-        require(msg.sender == _requireOwned(tokenId), "Update available for token owner");
         require(
             dataValidCheck(address(owner()), msg.sender, 0, newScore, newTokenURI, deadline, sig), "Invalid Signature"
         );
@@ -130,6 +127,6 @@ contract AmIBased1tx is ERC721URIStorageUpgradeable, ERC721EnumerableUpgradeable
 
     function _updateTokenInfo(uint256 tokenId, uint256 newScore, string memory newTokenURI) internal {
         _setScore(tokenId, newScore);
-        _setTokenURI(tokenId, newTokenURI);
+        _setTokenURI(tokenId, string.concat(newTokenURI, Strings.toString(tokenId)));
     }
 }

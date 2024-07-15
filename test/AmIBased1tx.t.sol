@@ -4,313 +4,302 @@ pragma solidity ^0.8.20;
 import {Test} from "forge-std/Test.sol";
 import "forge-std/Vm.sol";
 import "forge-std/console.sol";
-import {AmIBased1tx} from "../src/AmIBased1tx.sol";
+import {IAmBased} from "../src/IAmBased.sol";
 
-// forge test --match-contract AmIBased1txTest -vvv --gas-report
+// forge test --match-contract IAmBasedTest -vvv --gas-report
 
-contract AmIBased1txTest is Test {
-    AmIBased1tx public amIBased1tx;
+contract IAmBasedTest is Test {
+    IAmBased public iAmBased;
     uint256 sepoliaFork;
     address user1 = address(0x1d8e5a1c88aCfccED410f1a7A89237BA11FaF02F);
     address user2 = address(0x2300Ed1feECD5Fe7D1913DD3eB4699aC05D16122);
-    address payable deployer = payable(address(0xeA4a5BA5b31D585116D6921A859F0c39707771B3));
+    address payable deployer = payable(address(0xba6419c1f65F447eF6f19942bBee3BF281C6c521)); // deployer = eventOwner in test env.
+    address payable treasury = payable(address(0x77bbFD2d630A9123Ae5da78a7Af8856983223c8A));
     uint256 validTimestamp = 1770186688;
     uint256 invalidTimestamp = 1710187779;
 
     bytes user1FirstSig =
-        hex"5f11bbfad858e796a4c6d342ce51249ff0a57d7148162a3fd1fc245c9c1e92113ddb36fee0a0dd03144dd948e44d117383f0c1b1a65fb4f0daef4e59ad2cf2261c";
+        hex"4f969902207fca1b804e302e716925e074294bf8f0e2a0e1536eb59d1d02e92421b9e7d89727bca4b144798a63dbb041c36607a6fd016d4b020fa20bd6ad85711b";
     bytes user1SecondSig =
-        hex"39fbcf3feef4c058b2add5c446115a0c8ae2a334467e65c973f794ddc196ed3d55e936d4fe1a41cc9a4bb2777f5c027a11a51a65065ce880aaa750da334e93e31b";
+        hex"791528291c00f22cb76d5781603f6871468fa690a5171eb707a4b11c7658e89b53def49f65b3c7ef06a83574b47b06ab67b8d91c3f35e26802146cdee2c6a5ed1c";
     bytes user1InvalidSig =
-        hex"a25433d3b90e7bd031f133ec3bb2fdd431469bee754632c4c7a34e4e11efd85335d64a625e153347494354beb21c9cf570bca2a537951c036a18f6a14f5afae61c";
+        hex"ea43b679fd7c76e5a89f5f8946837478f2dc7476e438b505b6ec3f910abf0c406b1e40e39eed3afe4f44a252a3c3629d08c5159e14af42b59b14a7d1a76a3a441c";
     bytes user2FirstSig =
-        hex"b2e93a9e262ff6824a063653b8ee0431b60d9d4315e292be3ea48d63a1536253083abe3bfb4123abdd8bbec0962c044ba2452e38cdcd4056024c25c7768ba2361c";
+        hex"d08c7fd1bbc6cc69d121f2eef8472fa4b952bc6cdec96626650b0162bb6255ee503ae33fb64947a5143ef76ce50017bad047d05d74bed97a11fbd84dc454b7391b";
     bytes user2SecondSig =
-        hex"0d25d8b4690e8e649cbb281c681484264d7d16925d2f99670ae5b577f41440fc40918fcdd81ea8eb03e4f7ddec6747e5e10a94ecc6e92f60eadaa444e442e4521b";
+        hex"b4a7c823ef70399766559567bf84a6687a5dd22a2aeb7bcfc58fa4a165cf87fe0fc3937870677cef9f9f1c7b80e9952d6c9448af4c316cbd037f87b880b4248d1c";
     bytes user2InvalidSig =
-        hex"97d9268c1804d3244e98fbc4f049d7695e953da89189caedc060c02109291ab278a563623804a8232e8cd75d569e47e00213d1e4ee50e5cb0e8967cac89b1d291b";
+        hex"9517cc513c8cf0543bb0a9dcf2f415c3ce8032534ba9a0de77818836c2c3ce7477575d1f49a74d403b405256dee73a6a9ea231873b160bb364c046b1d2f95dc01b";
 
     function setUp() public {
         sepoliaFork = vm.createSelectFork("https://eth-sepolia.g.alchemy.com/v2/Ki8t6Gh4uTgsYlZg2oMehdE-Ns323whn");
         vm.deal(user1, 1 ether);
         vm.deal(user2, 1 ether);
         vm.startPrank(deployer);
-        amIBased1tx = new AmIBased1tx();
-        amIBased1tx.initialize(deployer, 200000000000000);
+        iAmBased = new IAmBased();
+        iAmBased.initialize(deployer, 200000000000000);
+        vm.label(address(iAmBased), "IAmBased");
+        vm.label(address(user1), "User1");
+        vm.label(address(user2), "User2");
         vm.stopPrank();
     }
 
     function test_SupportsInterface() public view {
-        require(amIBased1tx.supportsInterface(0x80ac58cd));
-        require(amIBased1tx.supportsInterface(0x49064906));
+        require(iAmBased.supportsInterface(bytes4(0x780e9d63)));
+        require(iAmBased.supportsInterface(bytes4(0x49064906)));
     }
 
     function test_UnLock() public {
         vm.prank(deployer);
-        amIBased1tx.setLock(false);
-        assertEq(amIBased1tx.getLockStatus(), false);
+        iAmBased.setLock(false);
+        assertEq(iAmBased.getLockStatus(), false);
     }
 
     function test_Lock() public {
         vm.prank(deployer);
-        amIBased1tx.setLock(true);
-        assertEq(amIBased1tx.getLockStatus(), true);
+        iAmBased.setLock(true);
+        assertEq(iAmBased.getLockStatus(), true);
     }
 
     function testFail_UnLock() public {
-        amIBased1tx.setLock(false);
+        iAmBased.setLock(false);
     }
 
     function test_DataValidCheck() public {
         vm.prank(user1);
-        amIBased1tx.amIBased{value: 200000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        iAmBased.amIBased{value: 200000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
         require(
-            amIBased1tx.dataValidCheck(
-                deployer,
-                user1,
-                0,
-                100,
-                "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7",
-                validTimestamp,
-                user1FirstSig
+            iAmBased.dataValidCheck(
+                deployer, user1, 0, 100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig
             )
         );
     }
 
     function testFail_DataValidCheck() public {
         vm.prank(user1);
-        amIBased1tx.amIBased{value: 200000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        iAmBased.amIBased{value: 200000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
         require(
-            amIBased1tx.dataValidCheck(
-                deployer,
-                user1,
-                0,
-                200,
-                "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7",
-                validTimestamp,
-                user1FirstSig
+            iAmBased.dataValidCheck(
+                deployer, user1, 0, 200, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig
             )
         );
     }
 
-    function test_JustMint() public {
-        vm.startPrank(user1);
-        uint256 initialTreasuryBalance = address(deployer).balance;
-        uint256 newTokenId = amIBased1tx.amIBased{value: 200000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
-        );
-        uint256 afterTreasuryBalance = address(deployer).balance;
-        uint256 score = amIBased1tx.getScore(newTokenId);
-        string memory tokenURI = amIBased1tx.tokenURI(newTokenId);
-        assertEqUint(score, 100);
-        assertEqUint(afterTreasuryBalance - initialTreasuryBalance, 200000000000000);
-        assertEq(tokenURI, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7");
-        assertEq(amIBased1tx.balanceOf(user1), 1);
-        assertEq(amIBased1tx.totalSupply(), 1);
-        vm.stopPrank();
-    }
-
     function test_Mint() public {
         vm.startPrank(user1);
-        uint256 initialTreasuryBalance = address(deployer).balance;
-        uint256 newTokenId = amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        uint256 initialTreasuryBalance = address(treasury).balance;
+        uint256 newTokenId = iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
-        uint256 afterTreasuryBalance = address(deployer).balance;
-        uint256 score = amIBased1tx.getScore(newTokenId);
-        string memory tokenURI = amIBased1tx.tokenURI(newTokenId);
+        uint256 afterTreasuryBalance = address(treasury).balance;
+        uint256 score = iAmBased.getScore(newTokenId);
+        string memory tokenURI = iAmBased.tokenURI(newTokenId);
         assertEqUint(score, 100);
         assertEqUint(afterTreasuryBalance - initialTreasuryBalance, 200000000000000);
-        assertEq(tokenURI, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7");
-        assertEq(amIBased1tx.balanceOf(user1), 1);
-        assertEq(amIBased1tx.totalSupply(), 1);
+        assertEq(tokenURI, "https://summer.1tx.network/api/iambased/1");
+        assertEq(iAmBased.balanceOf(user1), 1);
+        assertEq(iAmBased.totalSupply(), 1);
+        assertEq(iAmBased.isMinted(user1), true);
         vm.stopPrank();
     }
 
-    function testFail_Mint() public {
+    function test_MintInsufficientBalance() public {
         vm.startPrank(user1);
-        amIBased1tx.amIBased{value: 100000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        vm.expectRevert("Insufficient balance");
+        iAmBased.amIBased{value: 100000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
+        );
+        vm.stopPrank();
+    }
+
+    function test_MintInvalidSig() public {
+        vm.startPrank(user1);
+        vm.expectRevert("Invalid Signature");
+        iAmBased.amIBased{value: 200000000000000}(
+            150, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
         vm.stopPrank();
     }
 
     function test_MintAndTransfer() public {
         vm.startPrank(user1);
-        uint256 initialTreasuryBalance = address(deployer).balance;
-        uint256 newTokenId = amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        uint256 initialTreasuryBalance = address(treasury).balance;
+        uint256 newTokenId = iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
-        uint256 afterTreasuryBalance = address(deployer).balance;
-        uint256 score = amIBased1tx.getScore(newTokenId);
+        uint256 afterTreasuryBalance = address(treasury).balance;
+        uint256 score = iAmBased.getScore(newTokenId);
         assertEqUint(score, 100);
         assertEqUint(afterTreasuryBalance - initialTreasuryBalance, 200000000000000);
         vm.stopPrank();
-        assertEq(amIBased1tx.balanceOf(user1), 1);
-        assertEq(amIBased1tx.balanceOf(deployer), 0);
+        assertEq(iAmBased.balanceOf(user1), 1);
+        assertEq(iAmBased.balanceOf(deployer), 0);
 
         vm.prank(deployer);
-        amIBased1tx.setLock(false);
+        iAmBased.setLock(false);
 
         vm.prank(user1);
-        amIBased1tx.transferFrom(user1, deployer, newTokenId);
-        assertEq(amIBased1tx.balanceOf(user1), 0);
-        assertEq(amIBased1tx.balanceOf(deployer), 1);
+        iAmBased.transferFrom(user1, deployer, newTokenId);
+        assertEq(iAmBased.balanceOf(user1), 0);
+        assertEq(iAmBased.balanceOf(deployer), 1);
 
-        assertEq(amIBased1tx.ownerOf(newTokenId), deployer);
+        assertEq(iAmBased.ownerOf(newTokenId), deployer);
     }
 
     function testFail_MintAndTransfer() public {
         vm.startPrank(user1);
-        uint256 initialTreasuryBalance = address(deployer).balance;
-        uint256 newTokenId = amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        uint256 initialTreasuryBalance = address(treasury).balance;
+        uint256 newTokenId = iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
-        uint256 afterTreasuryBalance = address(deployer).balance;
-        uint256 score = amIBased1tx.getScore(newTokenId);
+        uint256 afterTreasuryBalance = address(treasury).balance;
+        uint256 score = iAmBased.getScore(newTokenId);
         assertEqUint(score, 100);
         assertEqUint(afterTreasuryBalance - initialTreasuryBalance, 200000000000000);
 
-        amIBased1tx.transferFrom(user1, deployer, newTokenId);
+        iAmBased.transferFrom(user1, deployer, newTokenId);
         vm.stopPrank();
     }
 
     function test_MintAndSafeTransferFrom() public {
         vm.startPrank(user1);
-        uint256 initialTreasuryBalance = address(deployer).balance;
-        uint256 newTokenId = amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        uint256 initialTreasuryBalance = address(treasury).balance;
+        uint256 newTokenId = iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
-        uint256 afterTreasuryBalance = address(deployer).balance;
-        uint256 score = amIBased1tx.getScore(newTokenId);
+        uint256 afterTreasuryBalance = address(treasury).balance;
+        uint256 score = iAmBased.getScore(newTokenId);
         assertEqUint(score, 100);
         assertEqUint(afterTreasuryBalance - initialTreasuryBalance, 200000000000000);
         vm.stopPrank();
 
         vm.prank(deployer);
-        amIBased1tx.setLock(false);
+        iAmBased.setLock(false);
 
         vm.prank(user1);
-        amIBased1tx.safeTransferFrom(user1, deployer, newTokenId);
+        iAmBased.safeTransferFrom(user1, deployer, newTokenId);
 
-        assertEq(amIBased1tx.ownerOf(newTokenId), deployer);
+        assertEq(iAmBased.ownerOf(newTokenId), deployer);
     }
 
     function testFail_MintAndSafeTransferFrom() public {
         vm.startPrank(user1);
-        uint256 initialTreasuryBalance = address(deployer).balance;
-        uint256 newTokenId = amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        uint256 initialTreasuryBalance = address(treasury).balance;
+        uint256 newTokenId = iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
-        uint256 afterTreasuryBalance = address(deployer).balance;
-        uint256 score = amIBased1tx.getScore(newTokenId);
+        uint256 afterTreasuryBalance = address(treasury).balance;
+        uint256 score = iAmBased.getScore(newTokenId);
         assertEqUint(score, 100);
         assertEqUint(afterTreasuryBalance - initialTreasuryBalance, 200000000000000);
 
-        amIBased1tx.safeTransferFrom(user1, deployer, newTokenId);
+        iAmBased.safeTransferFrom(user1, deployer, newTokenId);
         vm.stopPrank();
     }
 
     function testFail_MintTwice() public {
         vm.prank(user1);
-        uint256 firstNFT = amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        uint256 firstNFT = iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
 
         vm.prank(deployer);
-        amIBased1tx.setLock(false);
+        iAmBased.setLock(false);
 
         vm.prank(user1);
-        amIBased1tx.transferFrom(user1, deployer, firstNFT);
+        iAmBased.transferFrom(user1, deployer, firstNFT);
 
         vm.prank(user1);
-        amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
     }
 
     function test_SetTokenURIFromValidOwner() public {
         vm.prank(user1);
-        uint256 firstNFT = amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        uint256 firstNFT = iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
 
         vm.prank(user1);
-        amIBased1tx.updateTokenInfo(
-            firstNFT, 200, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw8", validTimestamp, user1SecondSig
+        iAmBased.updateTokenInfo(
+            firstNFT, 200, "https://summer.1tx.network/api/iambased/", validTimestamp, user1SecondSig
         );
     }
 
-    function testFail_SetTokenURIFromInvalidOwner() public {
+    function test_SetTokenURIFromInvalidOwner() public {
         vm.prank(user1);
-        uint256 firstNFT = amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        uint256 firstNFT = iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
 
         vm.prank(user2);
-        amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user2FirstSig, deployer
+        iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user2FirstSig, deployer
         );
 
         vm.prank(user2);
-        amIBased1tx.updateTokenInfo(
-            firstNFT, 200, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw8", validTimestamp, user2SecondSig
+        vm.expectRevert("Update available for token owner");
+        iAmBased.updateTokenInfo(
+            firstNFT, 200, "https://summer.1tx.network/api/iambased/", validTimestamp, user1SecondSig
         );
     }
 
-    function testFail_SetTokenURIWithInvalidScore() public {
+    function test_SetTokenURIWithInvalidScore() public {
         vm.prank(user1);
-        uint256 firstNFT = amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        uint256 firstNFT = iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
 
         vm.prank(user1);
-        amIBased1tx.updateTokenInfo(
-            firstNFT, 250, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw8", validTimestamp, user1SecondSig
+        vm.expectRevert("Invalid Signature");
+        iAmBased.updateTokenInfo(
+            firstNFT, 250, "https://summer.1tx.network/api/iambased/", validTimestamp, user1SecondSig
         );
     }
 
-    function testFail_SetTokenURIWithInvalidTimestamp() public {
+    function test_SetTokenURIWithInvalidTimestamp() public {
         vm.prank(user1);
-        uint256 firstNFT = amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        uint256 firstNFT = iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
 
         vm.prank(user1);
-        amIBased1tx.updateTokenInfo(
-            firstNFT, 200, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw8", invalidTimestamp, user1InvalidSig
+        vm.expectRevert("Expired");
+        iAmBased.updateTokenInfo(
+            firstNFT, 200, "https://summer.1tx.network/api/iambased/", invalidTimestamp, user1InvalidSig
         );
     }
 
     function testFail_ChangeFee() public {
         vm.prank(user1);
-        amIBased1tx.setFee(300000000000000);
+        iAmBased.setFee(300000000000000);
     }
 
     function test_ChangeFee() public {
         vm.startPrank(user1);
-        uint256 TreasuryBalance1 = address(deployer).balance;
-        amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user1FirstSig, deployer
+        uint256 TreasuryBalance1 = address(treasury).balance;
+        iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user1FirstSig, deployer
         );
-        uint256 TreasuryBalance2 = address(deployer).balance;
+        uint256 TreasuryBalance2 = address(treasury).balance;
         vm.stopPrank();
         assertEqUint(TreasuryBalance2 - TreasuryBalance1, 200000000000000);
 
         vm.prank(deployer);
-        amIBased1tx.setFee(300000000000000);
-        assertEq(amIBased1tx.getFee(), 300000000000000);
+        iAmBased.setFee(300000000000000);
+        assertEq(iAmBased.getFee(), 300000000000000);
 
         vm.startPrank(user2);
-        uint256 TreasuryBalance3 = address(deployer).balance;
-        amIBased1tx.amIBased{value: 500000000000000}(
-            100, "ipfs://QmPMaxM9eQcz9wzLd8XXAHtCTyW5zqQzeVD3X88XcuDvw7", validTimestamp, user2FirstSig, deployer
+        uint256 TreasuryBalance3 = address(treasury).balance;
+        iAmBased.amIBased{value: 500000000000000}(
+            100, "https://summer.1tx.network/api/iambased/", validTimestamp, user2FirstSig, deployer
         );
-        uint256 TreasuryBalance4 = address(deployer).balance;
+        uint256 TreasuryBalance4 = address(treasury).balance;
         vm.stopPrank();
         assertEqUint(TreasuryBalance4 - TreasuryBalance3, 300000000000000);
     }

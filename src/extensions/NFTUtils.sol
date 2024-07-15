@@ -7,8 +7,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 contract NFTUtils is Initializable {
     event Minted(address indexed minter, address indexed referrer, uint256 indexed tokenId);
-    event Locked(uint256 tokenId);
-    event Unlocked(uint256 tokenId);
 
     struct NFTUtilStorage {
         mapping(address minter => bool) _minted;
@@ -43,9 +41,6 @@ contract NFTUtils is Initializable {
         NFTUtilStorage storage $ = _getNFTUtilStorage();
         $._minted[minter] = true;
         emit Minted(minter, referrer, tokenId);
-        if ($._lockStatus) {
-            emit Locked(tokenId);
-        }
     }
 
     function isMinted(address user) public view returns (bool) {

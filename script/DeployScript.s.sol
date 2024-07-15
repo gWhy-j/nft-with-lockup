@@ -2,14 +2,15 @@
 pragma solidity ^0.8.20;
 
 import {Script, console} from "forge-std/Script.sol";
-import {AmIBased1tx} from "../src/AmIBased1tx.sol";
+import {IAmBased} from "../src/IAmBased.sol";
 import {Defender, ApprovalProcessResponse} from "openzeppelin-foundry-upgrades/Defender.sol";
 import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 
 contract DeployScript is Script {
-    AmIBased1tx amIBased1tx;
-    address owner = address(0x767d76D5838b71F06456b70b4B2eB34EaD169A6d);
-    address admin = address(0x5EE02121812199335f9A820838620b6Db37595d3);
+    IAmBased iAmBased;
+    address eventOwner = address(0xba6419c1f65F447eF6f19942bBee3BF281C6c521);
+    // address admin = address(0xf6ad1c61B3EA75F1c3059b77B92300883c1EccD8);
+    address admin = address(0x5EE02121812199335f9A820838620b6Db37595d3); // Sepolia
 
     function setUp() public {}
 
@@ -35,7 +36,7 @@ contract DeployScript is Script {
         opts.defender.useDefenderDeploy = true;
 
         address proxy = Upgrades.deployTransparentProxy(
-            "AmIBased1tx.sol", admin, abi.encodeCall(AmIBased1tx.initialize, (owner, 200000000000000)), opts
+            "IAmBased.sol", admin, abi.encodeCall(IAmBased.initialize, (eventOwner, 200000000000000)), opts
         );
 
         console.log("Proxy address: %s", proxy);
