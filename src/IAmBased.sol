@@ -10,10 +10,10 @@ import "@openzeppelin/contracts/interfaces/IERC721Enumerable.sol";
 import "./extensions/NFTUtils.sol";
 
 contract IAmBased is ERC721URIStorageUpgradeable, ERC721EnumerableUpgradeable, OwnableUpgradeable, NFTUtils {
-    function initialize(address initialOwner, uint256 fee) public initializer {
+    function initialize(address initialOwner, uint256 fee, bool lockStatus, address signer) public initializer {
         __ERC721_init("I Am Based", "IAB");
         __Ownable_init(initialOwner);
-        __NFTUtils_init(fee);
+        __NFTUtils_init(fee, lockStatus, signer);
     }
 
     function supportsInterface(bytes4 interfaceId)
@@ -97,6 +97,10 @@ contract IAmBased is ERC721URIStorageUpgradeable, ERC721EnumerableUpgradeable, O
         _setFee(fee);
     }
 
+    function setSigner(address newSigner) external onlyOwner {
+        _setSigner(newSigner);
+    }
+
     function initialTokenInfo(
         uint256 tokenId,
         uint256 newScore,
@@ -104,9 +108,7 @@ contract IAmBased is ERC721URIStorageUpgradeable, ERC721EnumerableUpgradeable, O
         uint256 deadline,
         bytes memory sig
     ) internal {
-        require(
-            dataValidCheck(address(owner()), msg.sender, 0, newScore, newTokenURI, deadline, sig), "Invalid Signature"
-        );
+        require(dataValidCheck(msg.sender, 0, newScore, newTokenURI, deadline, sig), "Invalid Signature");
         _updateTokenInfo(tokenId, newScore, newTokenURI);
     }
 
@@ -118,10 +120,7 @@ contract IAmBased is ERC721URIStorageUpgradeable, ERC721EnumerableUpgradeable, O
         bytes memory sig
     ) public {
         require(msg.sender == _requireOwned(tokenId), "Update available for token owner");
-        require(
-            dataValidCheck(address(owner()), msg.sender, tokenId, newScore, newTokenURI, deadline, sig),
-            "Invalid Signature"
-        );
+        require(dataValidCheck(msg.sender, tokenId, newScore, newTokenURI, deadline, sig), "Invalid Signature");
         _updateTokenInfo(tokenId, newScore, newTokenURI);
     }
 

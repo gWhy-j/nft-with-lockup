@@ -9,6 +9,7 @@ import {Upgrades, Options} from "openzeppelin-foundry-upgrades/Upgrades.sol";
 contract DeployScript is Script {
     IAmBased iAmBased;
     address eventOwner = address(0xba6419c1f65F447eF6f19942bBee3BF281C6c521);
+    address unveiledLedger = address(0x77bbFD2d630A9123Ae5da78a7Af8856983223c8A);
     // address admin = address(0xf6ad1c61B3EA75F1c3059b77B92300883c1EccD8);
     address admin = address(0x5EE02121812199335f9A820838620b6Db37595d3); // Sepolia
 
@@ -36,7 +37,10 @@ contract DeployScript is Script {
         opts.defender.useDefenderDeploy = true;
 
         address proxy = Upgrades.deployTransparentProxy(
-            "IAmBased.sol", admin, abi.encodeCall(IAmBased.initialize, (eventOwner, 200000000000000)), opts
+            "IAmBased.sol",
+            admin,
+            abi.encodeCall(IAmBased.initialize, (unveiledLedger, 200000000000000, true, eventOwner)),
+            opts
         );
 
         console.log("Proxy address: %s", proxy);
