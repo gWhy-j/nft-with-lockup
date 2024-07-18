@@ -10,10 +10,10 @@ import "@openzeppelin/contracts/interfaces/IERC721Enumerable.sol";
 import "./extensions/NFTUtils.sol";
 
 contract IAmBased is ERC721URIStorageUpgradeable, ERC721EnumerableUpgradeable, OwnableUpgradeable, NFTUtils {
-    function initialize(address initialOwner, uint256 fee, bool lockStatus, address signer) public initializer {
+    function initialize(address initialOwner, uint256 fee, address signer) public initializer {
         __ERC721_init("I Am Based", "IAB");
         __Ownable_init(initialOwner);
-        __NFTUtils_init(fee, lockStatus, signer);
+        __NFTUtils_init(fee, signer);
     }
 
     function supportsInterface(bytes4 interfaceId)

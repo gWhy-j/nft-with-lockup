@@ -15,7 +15,7 @@ contract UpgradeScript is Script {
         Options memory opts;
         opts.referenceContract = "IAmBased.sol";
         ProposeUpgradeResponse memory response =
-            Defender.proposeUpgrade(address(0xDCD03A4E74d2098087462A5B7e4caaA73b722d53), "IAmBased.sol", opts);
+            Defender.proposeUpgrade(address(0xA760d1CA9e5cB6333BaC7619A8765595829176f0), "IAmBased.sol", opts);
         console.log("Proposal id", response.proposalId);
         console.log("Url", response.url);
     }

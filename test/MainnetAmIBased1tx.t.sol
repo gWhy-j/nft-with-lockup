@@ -6,11 +6,11 @@ import "forge-std/Vm.sol";
 import "forge-std/console.sol";
 import {IAmBased} from "../src/IAmBased.sol";
 
-// forge test --match-contract IAmBasedTest -vvv --gas-report
+// forge test --match-contract MainnetIAmBasedTest -vvv --gas-report
 
-contract IAmBasedTest is Test {
-    IAmBased public iAmBased;
-    uint256 sepoliaFork;
+contract MainnetIAmBasedTest is Test {
+    IAmBased public iAmBased = IAmBased(address(0xA760d1CA9e5cB6333BaC7619A8765595829176f0));
+    uint256 mainnetFork;
     address user1 = address(0x1d8e5a1c88aCfccED410f1a7A89237BA11FaF02F);
     address user2 = address(0x2300Ed1feECD5Fe7D1913DD3eB4699aC05D16122);
     address payable deployer = payable(address(0xba6419c1f65F447eF6f19942bBee3BF281C6c521)); // deployer = eventOwner in test env.
@@ -32,12 +32,10 @@ contract IAmBasedTest is Test {
         hex"9517cc513c8cf0543bb0a9dcf2f415c3ce8032534ba9a0de77818836c2c3ce7477575d1f49a74d403b405256dee73a6a9ea231873b160bb364c046b1d2f95dc01b";
 
     function setUp() public {
-        sepoliaFork = vm.createSelectFork("https://eth-sepolia.g.alchemy.com/v2/Ki8t6Gh4uTgsYlZg2oMehdE-Ns323whn");
+        mainnetFork = vm.createSelectFork("https://base-mainnet.g.alchemy.com/v2/evugMWDogG8GHmBCVjrolsEMUMmbnsbH");
         vm.deal(user1, 1 ether);
         vm.deal(user2, 1 ether);
         vm.startPrank(deployer);
-        iAmBased = new IAmBased();
-        iAmBased.initialize(owner, 200000000000000, deployer);
         vm.label(address(iAmBased), "IAmBased");
         vm.label(address(user1), "User1");
         vm.label(address(user2), "User2");

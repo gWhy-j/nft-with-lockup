@@ -39,7 +39,7 @@ contract DeployScript is Script {
         address proxy = Upgrades.deployTransparentProxy(
             "IAmBased.sol",
             admin,
-            abi.encodeCall(IAmBased.initialize, (unveiledLedger, 200000000000000, true, eventOwner)),
+            abi.encodeCall(IAmBased.initialize, (unveiledLedger, 200000000000000, eventOwner)),
             opts
         );
 

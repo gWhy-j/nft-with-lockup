@@ -32,14 +32,14 @@ contract NFTUtils is Initializable {
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
-    function __NFTUtils_init(uint256 fee, bool lockStatus, address signer) internal onlyInitializing {
-        __NFTUtils_init_unchained(fee, lockStatus, signer);
+    function __NFTUtils_init(uint256 fee, address signer) internal onlyInitializing {
+        __NFTUtils_init_unchained(fee, signer);
     }
 
-    function __NFTUtils_init_unchained(uint256 fee, bool lockStatus, address signer) internal onlyInitializing {
+    function __NFTUtils_init_unchained(uint256 fee, address signer) internal onlyInitializing {
         NFTUtilStorage storage $ = _getNFTUtilStorage();
         $._fee = fee;
-        $._lockStatus = lockStatus;
+        $._lockStatus = true;
         $._signer = signer;
     }
 
